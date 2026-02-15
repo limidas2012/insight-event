@@ -1,0 +1,71 @@
+
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Sign In</h1>
+      <p>Welcome back! Please login to your account.</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [class.is-invalid]="submitted && f['email'].errors"
+          placeholder="Enter your email"
+        />
+        <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+          <div *ngIf="f['email'].errors['required']">Email is required</div>
+          <div *ngIf="f['email'].errors['email']">Email must be a valid email address</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [class.is-invalid]="submitted && f['password'].errors"
+          placeholder="Enter your password"
+        />
+        <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+          <div *ngIf="f['password'].errors['required']">Password is required</div>
+        </div>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <span *ngIf="loading" class="spinner"></span>
+        <span *ngIf="!loading">Sign In</span>
+        <span *ngIf="loading">Signing In...</span>
+      </button>
+    </form>
+
+    <div class="demo-credentials">
+      <p class="demo-title">Demo Credentials:</p>
+      <div class="demo-buttons">
+        <button class="demo-btn admin" (click)="fillCredentials('admin@test.com')">
+          <span class="role-badge">Admin</span>
+          <span class="email">admin@test.com</span>
+        </button>
+        <button class="demo-btn analyst" (click)="fillCredentials('analyst@test.com')">
+          <span class="role-badge">Analyst</span>
+          <span class="email">analyst@test.com</span>
+        </button>
+        <button class="demo-btn viewer" (click)="fillCredentials('viewer@test.com')">
+          <span class="role-badge">Viewer</span>
+          <span class="email">viewer@test.com</span>
+        </button>
+      </div>
+      <p class="demo-note">Password: <strong>password</strong> (for all accounts)</p>
+    </div>
+  </div>
+</div> 

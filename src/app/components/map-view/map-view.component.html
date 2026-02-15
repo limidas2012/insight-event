@@ -1,0 +1,166 @@
+<!-- <p>map-view works!</p> -->
+<div class="map-container">
+    <div class="map-sidebar" [class.collapsed]="!showFilters">
+      <div class="sidebar-header">
+        <h2>Filters</h2>
+        <button class="toggle-btn" (click)="showFilters = !showFilters">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path *ngIf="showFilters" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+            <path *ngIf="!showFilters" fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+          </svg>
+        </button>
+      </div>
+  
+      <div class="sidebar-content" *ngIf="showFilters">
+        <div class="filter-section">
+          <label class="filter-label">Search Events</label>
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()"
+              placeholder="Search by title, tag..."
+            />
+          </div>
+        </div>
+  
+        <div class="filter-section">
+          <label class="filter-label">Time Range</label>
+          <select [(ngModel)]="filters.quickDateRange" (change)="applyFilters()" class="filter-select">
+            <option value="last7days">Last 7 Days</option>
+            <option value="last30days">Last 30 Days</option>
+          </select>
+        </div>
+  
+        <div class="filter-section">
+          <label class="filter-label">Category</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item" *ngFor="let category of categories">
+              <input
+                type="checkbox"
+                [checked]="selectedCategories.has(category)"
+                (change)="toggleCategory(category)"
+              />
+              <span>{{ category }}</span>
+            </label>
+          </div>
+        </div>
+  
+        <div class="filter-section">
+          <label class="filter-label">Severity</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item" *ngFor="let severity of severities">
+              <input
+                type="checkbox"
+                [checked]="selectedSeverities.has(severity)"
+                (change)="toggleSeverity(severity)"
+              />
+              <span class="severity-badge" [class]="getSeverityClass(severity)">{{ severity }}</span>
+            </label>
+          </div>
+        </div>
+  
+        <div class="filter-section">
+          <label class="filter-label">Minimum Score: {{ filters.minScore }}</label>
+          <input
+            type="range"
+            [(ngModel)]="filters.minScore"
+            min="0"
+            max="100"
+            class="range-slider"
+          />
+        </div>
+  
+        <button class="apply-btn" (click)="applyFilters()">Apply Filters</button>
+  
+        <div class="results-count">
+          <strong>{{ filteredEvents.length }}</strong> events found
+        </div>
+      </div>
+    </div>
+  
+    <div class="map-content">
+      <div id="map"></div>
+      
+      <div class="loading-overlay" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading events...</p>
+      </div>
+    </div>
+  
+    <div class="event-panel" *ngIf="selectedEvent" [@slideIn]>
+      <div class="panel-header">
+        <h3>Event Details</h3>
+        <button class="close-btn" (click)="closePanel()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+          </svg>
+        </button>
+      </div>
+  
+      <div class="panel-content">
+        <div class="event-header">
+          <h2>{{ selectedEvent.title }}</h2>
+          <span class="severity-badge" [class]="getSeverityClass(selectedEvent.severity)">
+            {{ selectedEvent.severity }}
+          </span>
+        </div>
+  
+        <div class="event-meta">
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
+            </svg>
+            <span>{{ formatDate(selectedEvent.createdAt) }}</span>
+          </div>
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+            </svg>
+            <span>Score: {{ selectedEvent.score }}</span>
+          </div>
+        </div>
+  
+        <div class="event-section">
+          <h4>Description</h4>
+          <p>{{ selectedEvent.description }}</p>
+        </div>
+  
+        <div class="event-section">
+          <h4>Category</h4>
+          <span class="category-badge">{{ selectedEvent.category }}</span>
+        </div>
+  
+        <div class="event-section" *ngIf="selectedEvent.tags.length > 0">
+          <h4>Tags</h4>
+          <div class="tags-list">
+            <span class="tag" *ngFor="let tag of selectedEvent.tags">{{ tag }}</span>
+          </div>
+        </div>
+  
+        <div class="event-section" *ngIf="selectedEvent.impact">
+          <h4>Impact</h4>
+          <div class="impact-box">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/>
+            </svg>
+            <p>{{ selectedEvent.impact }}</p>
+          </div>
+        </div>
+  
+        <div class="event-section" *ngIf="selectedEvent.metadata">
+          <h4>Metadata</h4>
+          <div class="metadata-grid">
+            <div class="metadata-item" *ngFor="let item of selectedEvent.metadata | keyvalue">
+              <span class="metadata-key">{{ item.key }}:</span>
+              <span class="metadata-value">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
